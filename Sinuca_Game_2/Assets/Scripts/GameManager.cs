@@ -18,6 +18,12 @@ public class GameManager : MonoBehaviour
     bool isWinningShotForplayer2 = false;
     int player1BallsRemaining = 7;
     int player2BallsRemaining = 7;
+    bool isWaitingForBallMovementToStop = false;
+    bool willSwapPlayers = false;
+    bool isGameOver = false;
+    [SerializeField] float shotTimer = 3f;
+    private float currentTimer;
+    [SerializeField] float movementThreshold;
 
     [SerializeField] TextMeshProUGUI player1BallsText;
     [SerializeField] TextMeshProUGUI player2BallsText;
@@ -29,16 +35,68 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] Transform headPosition;
 
+    [SerializeField] Camera cueStickCamera;
+    [SerializeField] Camera overheadCamera;
+    Camera currentCamera;
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         currentPlayer = CurrentPlayer.Player1;
+        currentCamera = cueStickCamera;
+        currentTimer = shotTimer;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (isWaitingForBallMovementToStop && !isGameOver)
+        {
+            currentTimer -= Time.deltaTime;
+            if (currentTimer > 0)
+            {
+                return;
+            }
+
+            bool allStopped = true;
+            foreach (GameObject ball in GameObject.FindGameObjectsWithTag("Ball"))
+            {
+                if (ball.GetComponent<Rigidbody>().velocity.magnitude >= movementThreshold)
+                {
+                    allStopped = false;
+                    break;
+                }
+            }
+            if (allStopped)
+            {
+                isWaitingForBallMovementToStop = false;
+                if (willSwapPlayers)
+                {
+                    NextPlayerTurn();
+                }
+                else
+                {
+                    SwitchCameras();
+                }
+                currentTimer = shotTimer;
+            }
+        }
+    }
+
+    public void SwitchCameras(){
+        if (currentCamera == cueStickCamera){
+            cueStickCamera.enabled = false;
+            overheadCamera.enabled = true;
+            currentCamera = overheadCamera;
+            isWaitingForBallMovementToStop = true;
+        }
+        else {
+             cueStickCamera.enabled = true;
+            overheadCamera.enabled = false;
+            currentCamera = cueStickCamera;
+            currentCamera.gameObject.GetComponent<CameraController>().ResetCamera();
+        }
     }
 
     bool Scratch()
@@ -60,7 +118,7 @@ public class GameManager : MonoBehaviour
                 return true;
             }
         }
-        NextPlayerTurn();
+        willSwapPlayers = true;
         return false;
     }
 
@@ -78,18 +136,6 @@ public class GameManager : MonoBehaviour
     void ScratchOnWinningShot(string player)
     {
         Lose(player + " errou na sua tacada final e perdeu!");
-    }
-
-    void NoMoreBalls(CurrentPlayer player)
-    {
-        if (player == CurrentPlayer.Player1)
-        {
-            isWinningShotForplayer1 = true;
-        }
-        else
-        {
-            isWinningShotForplayer2 = true;
-        }
     }
 
     public void RestartTheGame()
@@ -142,7 +188,7 @@ public class GameManager : MonoBehaviour
                 }
                 if(currentPlayer != CurrentPlayer.Player1)
                 {
-                    NextPlayerTurn();
+                  willSwapPlayers = true;
                 }
             }
             else
@@ -155,7 +201,8 @@ public class GameManager : MonoBehaviour
                 }
                 if (currentPlayer != CurrentPlayer.Player2)
                 {
-                    NextPlayerTurn();
+                   willSwapPlayers = true;
+
                 }
 
             }
@@ -165,12 +212,14 @@ public class GameManager : MonoBehaviour
 
     void Lose(string message)
     {
+        isGameOver = true;
         messageText.gameObject.SetActive(true);
         messageText.text = message;
         restartButtom.SetActive(true);
     }
     void Win(string player)
     {
+        isGameOver = true;
         messageText.gameObject.SetActive(true);
         messageText.text = player + " venceu!";
         restartButtom.SetActive(true);
@@ -188,6 +237,8 @@ public class GameManager : MonoBehaviour
             currentPlayer = CurrentPlayer.Player1;
             currentTurnText.text = "Vez do Jogador 1";
         }
+        willSwapPlayers = false;
+        SwitchCameras();
     }
 
     private void OnTriggerEnter(Collider other)
