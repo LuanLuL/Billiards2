@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     bool isWaitingForBallMovementToStop = false;
     bool willSwapPlayers = false;
     bool isGameOver = false;
+    bool ballPocketed = false;
     [SerializeField] float shotTimer = 3f;
     private float currentTimer;
     [SerializeField] float movementThreshold;
@@ -71,7 +72,7 @@ public class GameManager : MonoBehaviour
             if (allStopped)
             {
                 isWaitingForBallMovementToStop = false;
-                if (willSwapPlayers)
+                if (willSwapPlayers || !ballPocketed)
                 {
                     NextPlayerTurn();
                 }
@@ -80,6 +81,7 @@ public class GameManager : MonoBehaviour
                     SwitchCameras();
                 }
                 currentTimer = shotTimer;
+                ballPocketed = false;
             }
         }
     }
@@ -126,11 +128,11 @@ public class GameManager : MonoBehaviour
     {
         if (currentPlayer == CurrentPlayer.Player1)
         {
-            Lose("Jogador 1 caçapou a bola oito muito cedo e perdeu!");
+            Lose("Jogador 1 encaçapou a bola oito muito cedo e perdeu!");
         }
         else
         {
-            Lose("Jogador 2 caçapou a bola oito muito cedo e perdeu!");
+            Lose("Jogador 2 encaçapou a bola oito muito cedo e perdeu!");
         }
     }
     void ScratchOnWinningShot(string player)
@@ -245,6 +247,7 @@ public class GameManager : MonoBehaviour
     {
         if (other.gameObject.tag == "Ball")
         {
+            ballPocketed = true;
             if (CheckBall(other.gameObject.GetComponent<Ball>()))
             {
                 Destroy(other.gameObject);
