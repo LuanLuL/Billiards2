@@ -29,7 +29,7 @@ Este projeto visa o desenvolvimento de um **jogo tridimensional de sinuca**, uti
 
 1. Clone o repositório:
     ```bash
-    git clone https://github.com/usuario/repositorio.git
+    https://github.com/LuanLuL/Billiards2.git
     ```
 2. Abra o projeto na Unity.
 3. Clique em "Play" para rodar o jogo.
